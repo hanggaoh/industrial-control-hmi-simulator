@@ -2,7 +2,7 @@ CXX ?= c++
 CXXFLAGS := -std=c++20 -Wall -Wextra -Wpedantic -Iinclude
 BUILD_DIR := build
 
-.PHONY: all run test cmake-test clean
+.PHONY: all run test cmake-test tcp-demo clean
 
 all: $(BUILD_DIR)/simulator
 
@@ -29,6 +29,11 @@ cmake-test:
 	cmake -S . -B $(BUILD_DIR)/cmake
 	cmake --build $(BUILD_DIR)/cmake
 	ctest --test-dir $(BUILD_DIR)/cmake --output-on-failure
+
+tcp-demo:
+	cmake -S . -B $(BUILD_DIR)/cmake
+	cmake --build $(BUILD_DIR)/cmake --target tcp_device_demo
+	./$(BUILD_DIR)/cmake/tcp_device_demo
 
 clean:
 	rm -rf $(BUILD_DIR)
