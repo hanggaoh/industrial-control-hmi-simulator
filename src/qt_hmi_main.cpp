@@ -11,6 +11,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -96,7 +97,8 @@ public:
         overview->addWidget(alarm_, 0, 3);
         overview->addWidget(connection_, 0, 4);
         layout->addLayout(overview);
-        layout->addWidget(new TrendWidget(model_));
+        trend_ = new TrendWidget(model_, root);
+        layout->addWidget(trend_);
 
         auto* controls = new QGroupBox("Operator controls", root);
         auto* form = new QFormLayout(controls);
@@ -151,13 +153,14 @@ private:
                                   ? "QLabel { padding: 10px; font-weight: 600; background: #dff5e1; }"
                                   : "QLabel { padding: 10px; font-weight: 600; background: #ffc9c4; }");
         connection_->setText("Connection\n" + QString::fromStdString(model_.connection_status().detail));
-        centralWidget()->findChild<TrendWidget*>()->update();
+        trend_->update();
     }
 
     hmi::DashboardViewModel model_;
     QTimer timer_;
     double manual_level_{20.0};
     QLabel *level_{}, *setpoint_{}, *inlet_{}, *alarm_{}, *connection_{};
+    TrendWidget* trend_{};
     QComboBox* mode_{};
     QDoubleSpinBox* desired_setpoint_{};
 };
