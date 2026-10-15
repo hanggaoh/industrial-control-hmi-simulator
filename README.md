@@ -12,7 +12,8 @@ The project is a focused refresher of control-systems and C++ skills:
 - discrete sampling and a PID control loop;
 - process variables, manipulated variables, disturbances, and limits;
 - alarm conditions and event-oriented observability;
-- a runnable Qt HMI with trend charts, alarm/status views, and operator controls;
+- a runnable Qt HMI with trend charts, alarm/status views, operator controls,
+  disturbance simulation, and an acknowledgeable alarm-event list;
 - a testable C++20 implementation rather than simulation-only control logic;
 - a thread-safe field-device-to-controller event path and a local Boost.Asio
   TCP device simulator/client when Boost is installed.
@@ -73,7 +74,7 @@ view-model is separate from the control and transport interfaces.
 | `ProcessSample` events and a thread-safe `EventQueue` | Device-to-controller event hand-off and concurrency boundary |
 | Atomic actuator command | Simulated output/tag write without a shared mutable control object |
 | CSV-like console trend and high/high / low/low conditions | Trend and alarm concepts |
-| Qt 6 dashboard: tags, trend, alarms, connection state, Auto/Manual controls | Operator-facing HMI and view-model boundary |
+| Qt 6 dashboard: tags, trend, alarm event history/acknowledgement, connection state, Auto/Manual controls and disturbance input | Operator-facing HMI and view-model boundary |
 | Local Boost.Asio TCP server/client | Asynchronous telemetry, command acknowledgement, and connection-state pattern |
 | Unit tests for PID behaviour, queue delivery, and wire encoding | Testable control, concurrency, and transport primitives |
 
@@ -89,8 +90,8 @@ industrial field-device protocols, durable historian storage, or safety function
    documented wire format, telemetry, command acknowledgement, and connection
    state. Add a protocol adapter only when it is actually implemented.
 4. **Qt HMI** - completed process overview, trend chart, setpoint entry,
-   manual/auto mode, alarm, and connection status. Next: add an alarm list and
-   connect it to the TCP transport.
+   manual/auto mode, alarm/event acknowledgement, outlet disturbance and
+   connection status. Next: connect the HMI state to the TCP transport.
 5. **Portfolio polish** - screenshots, architecture diagram, tests, and a
    short engineering write-up.
 

@@ -8,7 +8,9 @@
 #include <QFrame>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QListWidget>
 #include <QMainWindow>
 #include <QPainter>
 #include <QPainterPath>
@@ -100,6 +102,18 @@ public:
         trend_ = new TrendWidget(model_, root);
         layout->addWidget(trend_);
 
+        auto* alarm_panel = new QGroupBox("Alarm event list", root);
+        auto* alarm_layout = new QVBoxLayout(alarm_panel);
+        alarm_events_ = new QListWidget(alarm_panel);
+        alarm_events_->setMinimumHeight(115);
+        alarm_layout->addWidget(alarm_events_);
+        auto* alarm_actions = new QHBoxLayout;
+        acknowledge_alarm_ = new QPushButton("Acknowledge active alarm", alarm_panel);
+        alarm_actions->addWidget(acknowledge_alarm_);
+        alarm_actions->addStretch();
+        alarm_layout->addLayout(alarm_actions);
+        layout->addWidget(alarm_panel);
+
         auto* controls = new QGroupBox("Operator controls", root);
         auto* form = new QFormLayout(controls);
         mode_ = new QComboBox(controls);
@@ -108,15 +122,28 @@ public:
         desired_setpoint_->setRange(0.0, 100.0);
         desired_setpoint_->setValue(65.0);
         desired_setpoint_->setSuffix(" %");
+        outlet_disturbance_ = new QDoubleSpinBox(controls);
+        outlet_disturbance_->setRange(0.0, 80.0);
+        outlet_disturbance_->setValue(20.0);
+        outlet_disturbance_->setSuffix(" % flow");
+        outlet_disturbance_->setToolTip("Adjust the simulated outlet flow to exercise the alarm path.");
         auto* apply = new QPushButton("Apply command", controls);
         form->addRow("Mode", mode_);
         form->addRow("Level setpoint", desired_setpoint_);
+        form->addRow("Outlet disturbance", outlet_disturbance_);
         form->addRow(apply);
         layout->addWidget(controls);
         setCentralWidget(root);
 
         connect(apply, &QPushButton::clicked, this, [this] {
             model_.set_operator_command({desired_setpoint_->value(), mode_->currentIndex() == 0});
+        });
+        connect(acknowledge_alarm_, &QPushButton::clicked, this, [this] {
+            if (model_.acknowledge_active_alarm()) {
+                refresh_alarm_list();
+                return;
+            }
+            refresh_alarm_list();
         });
         model_.set_connection_status({true, "Simulator connected"});
         model_.set_operator_command({65.0, true});
@@ -137,7 +164,9 @@ private:
 
     void publish_simulated_sample() {
         const auto command = model_.operator_command();
-        const double target = command.automatic_mode ? command.setpoint_percent : manual_level_;
+        const double target = command.automatic_mode
+                                  ? command.setpoint_percent - (outlet_disturbance_->value() - 20.0) * 1.5
+                                  : manual_level_;
         manual_level_ += (target - manual_level_) * 0.13;
         const auto alarm = manual_level_ < 10.0 ? domain::AlarmSeverity::low_low :
                            manual_level_ > 90.0 ? domain::AlarmSeverity::high_high : domain::AlarmSeverity::none;
@@ -153,7 +182,27 @@ private:
                                   ? "QLabel { padding: 10px; font-weight: 600; background: #dff5e1; }"
                                   : "QLabel { padding: 10px; font-weight: 600; background: #ffc9c4; }");
         connection_->setText("Connection\n" + QString::fromStdString(model_.connection_status().detail));
+        refresh_alarm_list();
         trend_->update();
+    }
+
+    void refresh_alarm_list() {
+        const auto events = model_.alarm_history();
+        alarm_events_->clear();
+        for (auto it = events.rbegin(); it != events.rend(); ++it) {
+            const QString state = it->active ? "ACTIVE" : "RETURNED";
+            const QString acknowledgement = it->acknowledged ? "ACKNOWLEDGED" : "UNACKNOWLEDGED";
+            auto* item = new QListWidgetItem(
+                QString("#%1  %2  —  %3 / %4")
+                    .arg(it->sequence)
+                    .arg(alarm_text(it->severity))
+                    .arg(state)
+                    .arg(acknowledgement),
+                alarm_events_);
+            item->setForeground(it->active && !it->acknowledged ? QColor("#b71c1c") : QColor("#37474f"));
+        }
+        const bool can_acknowledge = !events.empty() && events.back().active && !events.back().acknowledged;
+        acknowledge_alarm_->setEnabled(can_acknowledge);
     }
 
     hmi::DashboardViewModel model_;
@@ -161,8 +210,11 @@ private:
     double manual_level_{20.0};
     QLabel *level_{}, *setpoint_{}, *inlet_{}, *alarm_{}, *connection_{};
     TrendWidget* trend_{};
+    QListWidget* alarm_events_{};
+    QPushButton* acknowledge_alarm_{};
     QComboBox* mode_{};
     QDoubleSpinBox* desired_setpoint_{};
+    QDoubleSpinBox* outlet_disturbance_{};
 };
 
 }  // namespace

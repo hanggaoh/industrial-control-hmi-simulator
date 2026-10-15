@@ -29,7 +29,9 @@ transport::IDeviceClient ──► application::IControlService
 2. **Control board**: adapt the PID loop into `IControlService`; add bounds,
    alarm policy and deterministic tests.
 3. **HMI board**: implement `IHmiViewModel` and an optional Qt Widgets process
-   view with trends, alarm list and manual/auto controls.
+   view with trends, alarm history/acknowledgement, simulated disturbance and
+   manual/auto controls. Alarm acknowledgement never clears a process
+   condition; only a later normal process tag returns it to normal.
 4. **Portfolio board**: screenshots, a reproducible demo script, protocol
    notes and a concise engineering write-up.
 

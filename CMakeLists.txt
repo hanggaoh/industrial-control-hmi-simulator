@@ -14,10 +14,16 @@ target_include_directories(pid_controller_test PRIVATE include)
 add_executable(event_queue_test tests/event_queue_test.cpp)
 target_include_directories(event_queue_test PRIVATE include)
 
+add_executable(dashboard_view_model_test
+  tests/dashboard_view_model_test.cpp
+  src/hmi/dashboard_view_model.cpp)
+target_include_directories(dashboard_view_model_test PRIVATE include)
+
 include(CTest)
 if(BUILD_TESTING)
   add_test(NAME pid_controller_test COMMAND pid_controller_test)
   add_test(NAME event_queue_test COMMAND event_queue_test)
+  add_test(NAME dashboard_view_model_test COMMAND dashboard_view_model_test)
 endif()
 
 # Optional desktop HMI.  Keeping this target separate means the simulator and
