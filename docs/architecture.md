@@ -37,3 +37,23 @@ transport::IDeviceClient ──► application::IControlService
 
 No board should couple directly to another board's implementation. They share
 only the headers above.
+
+## Energy-storage control loop
+
+```text
+local BMS / inverter / meter simulator
+              │ EnergyTelemetry
+              ▼
+    application::StorageControlService
+       │                 │
+       │                 ├── IDispatchStrategy (replaceable policy)
+       │                 └── SafetyLimiter (always applied)
+       ▼
+      PowerCommand ──► simulated inverter
+```
+
+The dispatch strategy selects charge, discharge, or idle from site net load and
+SOC. `SafetyLimiter` is outside the strategy so a future optimiser cannot
+bypass connection, fault, temperature, state-of-charge, battery capability, or
+inverter-rating limits. This is a local simulation; it makes no claim to model
+an actual battery or inverter accurately.

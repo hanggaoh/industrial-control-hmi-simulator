@@ -2,8 +2,9 @@
 
 A learning project that models a small industrial water-tank process and the
 building blocks around it: discrete-time control, process I/O, alarms, trends,
-and a Qt operator HMI. It is deliberately a simulator, not a safety-certified or
-production SCADA product.
+and a Qt operator HMI. It also contains a local battery-energy-storage dispatch
+simulator. Both are deliberately simulators, not safety-certified or production
+SCADA/energy-management products.
 
 ## Why this project
 
@@ -17,6 +18,8 @@ The project is a focused refresher of control-systems and C++ skills:
 - a testable C++20 implementation rather than simulation-only control logic;
 - a thread-safe field-device-to-controller event path and a local Boost.Asio
   TCP device simulator/client when Boost is installed.
+- an injectable battery dispatch strategy with independent safety limiting and
+  a local BMS/inverter/load simulation; no physical hardware is required.
 
 ## Current scope
 
@@ -66,6 +69,24 @@ The HMI presents live level, setpoint, inlet-command, alarm, and connection
 tags, a rendered trend, and Auto/Manual setpoint controls. Its dashboard
 view-model is separate from the control and transport interfaces.
 
+### Energy-storage dispatch demo
+
+The energy demo demonstrates the intended control architecture for an
+industrial power-control portfolio piece. A local plant produces BMS,
+inverter, and net-load telemetry. `StorageControlService` calls an injected
+`IDispatchStrategy`, then `SafetyLimiter` applies fault, connection,
+temperature, SOC, battery-power, and inverter-rating constraints before a
+command reaches the simulated inverter.
+
+```sh
+./build/cmake/energy_storage_demo
+```
+
+Positive command power means battery discharge to serve local load; negative
+power means charging from surplus generation. The first strategy is deliberately
+rule-based and explainable. A later peak-shaving, SOC-tracking, or PID strategy
+can implement `IDispatchStrategy` without changing the transport or UI layer.
+
 ## Implemented evidence map
 
 | Implemented in this repository | Industrial/SCADA-HMI concept it demonstrates |
@@ -76,6 +97,7 @@ view-model is separate from the control and transport interfaces.
 | CSV-like console trend and high/high / low/low conditions | Trend and alarm concepts |
 | Qt 6 dashboard: tags, trend, alarm event history/acknowledgement, connection state, Auto/Manual controls and disturbance input | Operator-facing HMI and view-model boundary |
 | Local Boost.Asio TCP server/client | Asynchronous telemetry, command acknowledgement, and connection-state pattern |
+| `IDispatchStrategy` + `SafetyLimiter` + local battery/inverter model | Injected energy dispatch, safety precedence, and hardware-free integration testing |
 | Unit tests for PID behaviour, queue delivery, and wire encoding | Testable control, concurrency, and transport primitives |
 
 The control core is an in-process educational simulator. It does not implement

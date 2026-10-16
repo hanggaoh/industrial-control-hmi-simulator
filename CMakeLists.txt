@@ -8,6 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(control_simulator src/main.cpp)
 target_include_directories(control_simulator PRIVATE include)
 
+add_executable(energy_storage_demo src/energy_storage_demo.cpp)
+target_include_directories(energy_storage_demo PRIVATE include)
+
 add_executable(pid_controller_test tests/pid_controller_test.cpp)
 target_include_directories(pid_controller_test PRIVATE include)
 
@@ -19,11 +22,15 @@ add_executable(dashboard_view_model_test
   src/hmi/dashboard_view_model.cpp)
 target_include_directories(dashboard_view_model_test PRIVATE include)
 
+add_executable(storage_dispatch_test tests/storage_dispatch_test.cpp)
+target_include_directories(storage_dispatch_test PRIVATE include)
+
 include(CTest)
 if(BUILD_TESTING)
   add_test(NAME pid_controller_test COMMAND pid_controller_test)
   add_test(NAME event_queue_test COMMAND event_queue_test)
   add_test(NAME dashboard_view_model_test COMMAND dashboard_view_model_test)
+  add_test(NAME storage_dispatch_test COMMAND storage_dispatch_test)
 endif()
 
 # Optional desktop HMI.  Keeping this target separate means the simulator and
